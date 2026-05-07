@@ -1,4 +1,4 @@
-import React, {  useEffect, useState } from 'react'
+import  {  useEffect, useState } from 'react'
 import SearchBar from './components/SearchBar';
 import MoviesGrid from './components/MovieGrid'
 import LoadingSpinner from './components/LoadingSpinner';
@@ -7,6 +7,7 @@ import Error from './components/Error';
 import { Routes, Route } from 'react-router-dom';
 import FavoritesPage from './components/FavoritesPage';
 import { useFavorites } from './hooks/useFavorites';
+import MoodMatcher from "./components/MoodMatcher";
 import { useRef } from 'react';
 const App = () => {
 
@@ -78,7 +79,7 @@ useEffect(() => {
       <Route path="/" element={
         <>
           <SearchBar query={query} setQuery={setQuery} setPage={setPage} />
-    
+          <MoodMatcher toggleFavorite={toggleFavorite} isFavorite={isFavorite} />
     {isLoading && page === 1 ? (  
       <LoadingSpinner />
     ) : error ? (

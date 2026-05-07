@@ -12,6 +12,7 @@ function MovieCard({ movie, onToggleFavorite, isFavorite }) {
       <img
         src={movie.poster_path ? `https://image.tmdb.org/t/p/w500${movie.poster_path}`: noPoster}
         alt={movie.title}
+        loading='lazy'
         className="w-full object-cover"
       />
       <div className="p-3">

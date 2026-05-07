@@ -4,7 +4,7 @@
 const SearchBar = ({ query, setQuery, setPage  }) => {
   
   return (
-    <div className='w-full bg-white shadow-md p-4 sticky top-0 '>
+    <div className='w-full bg-gray-800 shadow-md p-4 sticky top-0 z-10'>
       <input
         type="text"
         value={query}
@@ -13,7 +13,7 @@ const SearchBar = ({ query, setQuery, setPage  }) => {
           setPage(1);  
         }}
         placeholder="Enter movie name"
-        className="w-full max-w-md mx-auto block p-2 border rounded-md placeholder-gray-400 focus:ring-2 focus:ring-blue-500 text-gray-900"
+        className="w-full max-w-md mx-auto block p-2 rounded-md bg-gray-700 text-white placeholder-gray-400 border border-gray-600 focus:ring-2 focus:ring-yellow-400"
         />
     </div>
   );
