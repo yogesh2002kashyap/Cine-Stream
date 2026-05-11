@@ -1,107 +1,117 @@
-import  {  useEffect, useState } from 'react'
-import SearchBar from './components/SearchBar';
-import MoviesGrid from './components/MovieGrid'
-import LoadingSpinner from './components/LoadingSpinner';
-import Navbar from './components/Navbar'
-import Error from './components/Error';
+import { useState } from 'react';
 import { Routes, Route } from 'react-router-dom';
+
+import Navbar from './components/Navbar';
+import HeroSection from './components/HeroSection';
+import SearchBar from './components/SearchBar';
+import MoviesGrid from './components/MovieGrid';
+import MoviesGridSkeleton from './components/MoviesGridSkeleton';
 import FavoritesPage from './components/FavoritesPage';
+import MoodMatcher from './components/MoodMatcher';
+import Error from './components/Error';
+
 import { useFavorites } from './hooks/useFavorites';
-import MoodMatcher from "./components/MoodMatcher";
-import { useRef } from 'react';
+import { useMovies } from './hooks/useMovies';
+
 const App = () => {
-
-  const [movies, setMovies] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState(null);
   const [query, setQuery] = useState('');
-  const [page, setPage] = useState(1);
-  const [hasMore, setHasMore] = useState(true);
-
-  const sentinelRef = useRef(null);
-  const isLoadingRef = useRef(false);
 
   const { favorites, toggleFavorite, isFavorite } = useFavorites();
 
-useEffect(() => {
-  async function fetchMovies() {
-    try {
-      setIsLoading(true);
-      isLoadingRef.current = true;
-      setError(null);
+  const {
+    movies,
+    isLoading,
+    error,
+    hasMore,
+    sentinelRef,
+    page,
+    setPage,
+  } = useMovies(query);
 
-      let url = query.trim() === ''
-        ? `https://api.themoviedb.org/3/movie/popular?api_key=${import.meta.env.VITE_TMDB_API_KEY}&page=${page}`
-        : `https://api.themoviedb.org/3/search/movie?api_key=${import.meta.env.VITE_TMDB_API_KEY}&query=${query}&page=${page}`;
+  return (
+    <div className="min-h-screen bg-linear-to-b from-black via-gray-900 to-black text-white overflow-x-hidden">
+      <Navbar favoritesCount={favorites.length} />
 
-      const res = await fetch(url);
-      const data = await res.json();
+      <Routes>
+        <Route
+          path="/"
+          element={
+            <>
+              <HeroSection />
 
-      if (page === 1) {
-        setMovies(data.results);                          // replace
-      } else {
-        setMovies(prev => [...prev, ...data.results]);    // append
-      }
+              <div className="relative z-20 -mt-8">
+                <SearchBar
+                  query={query}
+                  setQuery={setQuery}
+                  setPage={setPage}
+                />
+              </div>
 
-      setHasMore(page < data.total_pages);
+              <div className="px-2 md:px-8 mt-10">
+                <MoodMatcher
+                  toggleFavorite={toggleFavorite}
+                  isFavorite={isFavorite}
+                />
+              </div>
 
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setIsLoading(false);
-      isLoadingRef.current = false;
-    }
-  }
+              <section className="mt-12">
+                <div className="px-6 md:px-10 flex items-center justify-between">
+                  <h2 className="text-2xl md:text-3xl font-bold">
+                    Trending Movies
+                  </h2>
 
-  fetchMovies();
-}, [page, query]);
+                  <span className="text-gray-400 text-sm">
+                    Updated Daily
+                  </span>
+                </div>
 
-useEffect(() => {
-  const observer = new IntersectionObserver((entries) => {
-    if (entries[0].isIntersecting && hasMore && !isLoadingRef.current) {
-      setPage(prev => prev + 1);  // triggers Effect 2 → fetches next page
-    }
-  }, { threshold:0.1  });
+                {isLoading && page === 1 ? (
+                  <MoviesGridSkeleton />
+                ) : error ? (
+                  <Error error={error} />
+                ) : (
+                  <MoviesGrid
+                    movies={movies}
+                    toggleFavorite={toggleFavorite}
+                    isFavorite={isFavorite}
+                  />
+                )}
+              </section>
 
-  if(sentinelRef.current){
-    observer.observe(sentinelRef.current);
-  }
+              <div ref={sentinelRef} className="h-20" />
 
-  return () => observer.disconnect();
-}, [hasMore]);
-  
+              {isLoading && page > 1 && (
+                <div className="flex justify-center py-8">
+                  <div className="flex gap-2">
+                    <div className="w-2 h-2 bg-red-500 rounded-full animate-bounce"></div>
+                    <div className="w-2 h-2 bg-red-500 rounded-full animate-bounce [animation-delay:0.1s]"></div>
+                    <div className="w-2 h-2 bg-red-500 rounded-full animate-bounce [animation-delay:0.2s]"></div>
+                  </div>
+                </div>
+              )}
 
-  return ( 
-   <div className="bg-gray-900 text-white min-h-screen">
+              {!hasMore && (
+                <p className="text-center text-gray-500 py-12">
+                  You’ve reached the end of the catalog.
+                </p>
+              )}
+            </>
+          }
+        />
 
-    <Navbar favoritesCount={favorites.length} />
-    <Routes>
-      <Route path="/" element={
-        <>
-          <SearchBar query={query} setQuery={setQuery} setPage={setPage} />
-          <MoodMatcher toggleFavorite={toggleFavorite} isFavorite={isFavorite} />
-    {isLoading && page === 1 ? (  
-      <LoadingSpinner />
-    ) : error ? (
-      <Error error={error} />
-    ) : (
-      <MoviesGrid movies={movies} toggleFavorite={toggleFavorite} isFavorite={isFavorite} />
-    )}
+        <Route
+          path="/favorites"
+          element={
+            <FavoritesPage
+              favorites={favorites}
+              onToggleFavorite={toggleFavorite}
+              isFavorite={isFavorite}
+            />
+          }
+        />
+      </Routes>
+    </div>
+  );
+};
 
-    {/* sentinel always stays in DOM */}
-    <div ref={sentinelRef} className="h-10" />
-    
-    {isLoading && page > 1 && <LoadingSpinner />} 
-    
-    {!hasMore && (
-      <p className="text-center text-gray-500 py-6">You've reached the end!</p>
-    )}        </>
-      } />
-      <Route path="/favorites" element={<FavoritesPage favorites={favorites} onToggleFavorite={toggleFavorite} isFavorite={isFavorite} />} />
-    </Routes>
-    
-  </div>
-  )
-}
-
-export default App
+export default App;
